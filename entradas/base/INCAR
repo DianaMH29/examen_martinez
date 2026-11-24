@@ -1,0 +1,30 @@
+SYSTEM  = Cr2SeTeO Janus 2D - AFM checkerboard - caso base benchmark 
+
+# Electronico (precision por definir)
+PREC    = Normal
+ENCUT   = 500
+EDIFF   = 1E-6
+NELM    = 120
+ALGO    = Normal
+LREAL   = .FALSE.
+# NBANDS fijo: si no, VASP lo redondea segun el numero de procesos y el trabajo cambia con p
+NBANDS  = 48
+
+# Espin polarizado, configuracion AFM (estado base)
+ISPIN   = 2
+MAGMOM  = 3.0 -3.0 0.0 0.0 0.0
+
+# Single point: sin relajacion ionica (numero de pasos ionicos fijo = 1)
+IBRION  = -1
+NSW     = 0
+
+
+ISMEAR  = 0
+SIGMA   = 0.05
+LASPH   = .TRUE.
+
+# Salida
+LWAVE   = .FALSE.
+LCHARG  = .FALSE.
+
+# Paralelismo: KPAR y NCORE los escribe slurm/run_vasp.sh en cada corrida
