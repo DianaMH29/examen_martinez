@@ -5,7 +5,7 @@
 #SBATCH --cpus-per-task=6
 #SBATCH --time=00:05:00
 #SBATCH --mem=2000M
-#SBATCH -w granado-compute-16
+#SBATCH -w granado-compute-17
 #SBATCH --reservation=halzate_10
 #SBATCH --output=logs/%x_%j.out
 
@@ -34,6 +34,8 @@ srun --cpu-bind=verbose,cores --cpus-per-task=6 \
 
 echo; echo "=== 3b) Hilos OpenMP dentro de cada proceso"
 export OMP_NUM_THREADS=6 OMP_PLACES=cores OMP_PROC_BIND=close
+module load gnu8/8.3.0 2>/dev/null; command -v gfortran || echo "(sin gfortran: revise module avail gnu)"
+
 if gfortran -fopenmp -O0 "$SLURM_SUBMIT_DIR/slurm/omp_check.f90" -o "/tmp/omp_check_$SLURM_JOB_ID" 2>/dev/null; then
   srun --cpu-bind=cores --cpus-per-task=6 "/tmp/omp_check_$SLURM_JOB_ID" | sort -t= -k3,3n -k4,4n
   rm -f "/tmp/omp_check_$SLURM_JOB_ID"
