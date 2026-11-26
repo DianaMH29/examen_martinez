@@ -52,8 +52,7 @@ ulimit -s unlimited
 module load "$VASP_MODULE"
 if [[ $VASP_MODULE == *openmp* ]]; then
   # El modulo de VASP 6.3 carga fftw/3.3.8-gnu9 (sin OpenMP), pero el binario necesita
-  # libfftw3_omp.so.3, que solo esta en la version -openmp. En el login funciona por casualidad
-  # (/usr/local/lib), en los nodos de computo no.
+  # libfftw3_omp.so.3, que solo esta en la version -openmp. 
   module load fftw/3.3.8-gnu9-openmp
   export LD_LIBRARY_PATH=/opt/ohpc/pub/libs/fftw/3.3.8-gnu9-openmp/lib:${LD_LIBRARY_PATH:-}
 fi
@@ -62,24 +61,25 @@ if ldd "$(which vasp_std)" | grep -q "not found"; then
   echo "ERROR: librerias faltantes para vasp_std:"; ldd "$(which vasp_std)" | grep "not found"; exit 1
 fi
 
-export OMP_NUM_THREADS=$NOMP
+export OMP_NUM_THREADS=${OMP_THREADS:-$NOMP}   # OMP_THREADS=1 con -c2: 1 proceso por nucleo fisico, 1 hilo
 export OMP_PLACES=cores
 export OMP_PROC_BIND=close
 export OMP_STACKSIZE=512m
+export OPENBLAS_NUM_THREADS=1           # agregado tras diagnosticar sobresuscripcion; no afecta corridas con 1 hilo (A.1, A.1c, B.1)
+export OMP_NESTED=FALSE
 export OMP_DISPLAY_AFFINITY=TRUE        # cada hilo imprime su nucleo (si libgomp lo soporta)
 export OMP_DISPLAY_ENV=VERBOSE          # imprime OMP_PLACES resueltos -> evidencia de afinidad
 
-# Evidencia de afinidad por proceso MPI (rapido, segundos)
+# Evidencia de afinidad por proceso MPI 
 srun --cpu-bind=verbose,cores --cpus-per-task="$NOMP" \
      bash -c 'echo "rank=$SLURM_PROCID host=$(hostname) cpus=$(taskset -cp $$ | cut -d: -f2)"' \
      > afinidad.txt 2>&1 || true
 
-# Lanzador: srun (como en el enunciado) o mpirun (como en tus calculos de produccion).
-# Ambos imprimen el mapa de nucleos al inicio de vasp.out como evidencia de afinidad.
 LAUNCHER=${LAUNCHER:-srun}
 T0=$(date +%s.%N)
 if [[ $LAUNCHER == srun ]]; then
-  srun --cpu-bind=verbose,cores --cpus-per-task="$NOMP" vasp_std > vasp.out 2>&1
+  # Open MPI 4 de Granado necesita que srun le hable en PMIx (sin esto: "OPAL ERROR: Unreachable")
+  srun --mpi="${SRUN_MPI:-pmix}" --cpu-bind=verbose,cores --cpus-per-task="$NOMP" vasp_std > vasp.out 2>&1
 elif [[ $VASP_MODULE == *intel* ]]; then          # Intel MPI
   export I_MPI_PIN_DOMAIN=omp I_MPI_DEBUG=4
   mpirun -np "$NMPI" vasp_std > vasp.out 2>&1
@@ -95,6 +95,7 @@ parte=${PARTE:-NA}
 rep=${REP:-1}
 nmpi=${NMPI}
 nomp=${NOMP}
+omp_threads=${OMP_THREADS:-$NOMP}
 kpar=${KPAR}
 ncore=${NCORE}
 case=${CASE}
@@ -103,10 +104,10 @@ incar_set=${INCAR_SET:-}
 partition=${SLURM_JOB_PARTITION}
 modulo=${VASP_MODULE}
 launcher=${LAUNCHER}
+srun_mpi=${SRUN_MPI:-pmix}
 nodes=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | paste -sd+)
 t_wall_s=$(awk "BEGIN{print $T1 - $T0}")
 fecha=$(date -Iseconds)
 EOF
 module list > modulos.txt 2>&1 || true
 rm -f WAVECAR CHG CHGCAR PROCAR DOSCAR EIGENVAL POTCAR
-
