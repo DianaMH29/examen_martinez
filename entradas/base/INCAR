@@ -1,8 +1,8 @@
-SYSTEM  = Cr2SeTeO Janus 2D - AFM checkerboard - caso base benchmark 
+YSTEM  = Cr2SeTeO Janus 2D - AFM checkerboard - caso base benchmark 
 
 # Electronico (precision por definir)
 PREC    = Normal
-ENCUT   = 500
+ENCUT   = 400
 EDIFF   = 1E-6
 NELM    = 120
 ALGO    = Normal
