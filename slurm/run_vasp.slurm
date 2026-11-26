@@ -2,7 +2,7 @@
 #SBATCH --partition=phys_fast
 #SBATCH --time=01:30:00
 #SBATCH --mem=16000M
-#SBATCH -w granado-compute-16
+#SBATCH -w granado-compute-17
 #SBATCH --reservation=halzate_10
 #SBATCH --output=logs/%x_%j.out
 #
