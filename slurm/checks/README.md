@@ -1,4 +1,4 @@
-# Scripts de verificación (`slurm/`)
+# Scripts de verificación (`slurm/checks/`)
 
 Antes de lanzar las corridas de VASP, que consumen presupuesto, estos scripts comprueban tres cosas en el nodo `granado-compute-16/17` (partición `phys_fast`, reserva `halzate_10`):
 
@@ -10,12 +10,12 @@ Todos los jobs son muy cortos (2 a 5 minutos) y escriben su salida en `logs/`.
 
 | Archivo | Cómo se corre | Pregunta que responde |
 |---|---|---|
-| `00_verificar_afinidad.slurm` | `sbatch slurm/00_verificar_afinidad.slurm` | ¿Cómo es el nodo y quedan bien 4 procesos × 6 hilos? |
-| `01_verificar_ht.slurm` | `sbatch slurm/01_verificar_ht.slurm` | Dentro de un job de 24 CPUs, ¿dónde caen procesos e hilos con distintas combinaciones? |
-| `02_verificar_asignacion.sh` | `bash slurm/02_verificar_asignacion.sh` | Si el job completo es pequeño, ¿cuántas CPUs reserva y cobra Slurm? |
+| `00_verificar_afinidad.slurm` | `sbatch slurm/checks/00_verificar_afinidad.slurm` | ¿Cómo es el nodo y quedan bien 4 procesos × 6 hilos? |
+| `01_verificar_ht.slurm` | `sbatch slurm/checks/01_verificar_ht.slurm` | Dentro de un job de 24 CPUs, ¿dónde caen procesos e hilos con distintas combinaciones? |
+| `02_verificar_asignacion.sh` | `bash slurm/checks/02_verificar_asignacion.sh` | Si el job completo es pequeño, ¿cuántas CPUs reserva y cobra Slurm? |
 | `omp_check.f90` | Lo compilan los scripts | Programa auxiliar: cada hilo OpenMP dice en qué CPU está. |
 
-Todos los comandos se lanzan desde la carpeta `examen_martinez/`.
+Todos los comandos se lanzan desde la carpeta raíz `examen_martinez/`, no desde `slurm/checks/`. Los scripts 00 y 01 buscan `omp_check.f90` a partir del directorio desde donde se hace `sbatch`, y `logs/` también se crea relativo a ese directorio.
 
 ---
 
@@ -124,17 +124,18 @@ Si `gfortran` no está disponible, esta parte se salta. En ese caso, la afinidad
 Cada job:
 1. Imprime `NumCPUs`, el número de CPUs que Slurm asignó de verdad.
 2. Muestra en qué CPUs quedó cada proceso.
-3. Si `cpus-per-task > 1` y existe `slurm/omp_check`, corre los hilos OpenMP con `OMP_PLACES=cores` y con `OMP_PLACES=threads`.
+3. Si `cpus-per-task > 1` y existe `slurm/checks/omp_check`, corre los hilos OpenMP con `OMP_PLACES=cores` y con `OMP_PLACES=threads`.
 
 Las salidas quedan en `logs/asig_n<N>c<C>_<jobid>.out`.
 
 ### Detalles a tener en cuenta
 
-- **Necesita `slurm/omp_check` ya compilado.** El script no lo compila. Si el ejecutable no existe, la parte de OpenMP **se salta sin avisar**. Para compilarlo:
+- **Necesita `slurm/checks/omp_check` ya compilado.** El script no lo compila. Si el ejecutable no existe, la parte de OpenMP **se salta sin avisar**. Para compilarlo desde la raíz del proyecto:
   ```bash
-  cd slurm && gfortran -fopenmp omp_check.f90 -o omp_check
+  module load gnu8/8.3.0
+  gfortran -fopenmp slurm/checks/omp_check.f90 -o slurm/checks/omp_check
   ```
-- **Usa otra versión del compilador.** Este script carga `gnu8/8.3.0`, mientras que el 00 y el 01 usan `gnu9`. Conviene compilar `omp_check` con el mismo módulo que se carga al correrlo, para que no falle por la librería de OpenMP (`libgomp`).
+- **Usa el mismo compilador.** El script carga `gnu8/8.3.0` al correr, así que `omp_check` debe compilarse con ese mismo módulo. Si no, puede fallar por la librería de OpenMP (`libgomp`).
 
 ---
 

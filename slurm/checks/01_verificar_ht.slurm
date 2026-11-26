@@ -12,7 +12,7 @@
 # Segundo chequeo: Aqui se ve, dentro de esa asignacion,
 # donde caen los procesos y los hilos en las configuraciones.
 #
-# Uso: sbatch slurm/01_verificar_ht.slurm
+# Uso: sbatch slurm/checks/01_verificar_ht.slurm
 
 module load vasp/6.3.0-gnu9-openmp
 module load gnu8/8.3.0 2>/dev/null
@@ -25,7 +25,7 @@ echo "=== p=2  MPI con -c2: 1 proceso por nucleo fisico";     mask -n2 -c2
 echo "=== p=24 MPI con -c1 (como en A.1)";                    mask -n24 -c1
 echo "=== 12 procesos con -c2 (1 por nucleo fisico)";        mask -n12 -c2
 
-if command -v gfortran >/dev/null && gfortran -fopenmp -O0 "$SLURM_SUBMIT_DIR/slurm/omp_check.f90" -o /tmp/omp_$SLURM_JOB_ID; then
+if command -v gfortran >/dev/null && gfortran -fopenmp -O0 "$SLURM_SUBMIT_DIR/slurm/checks/omp_check.f90" -o /tmp/omp_$SLURM_JOB_ID; then
   export OMP_PROC_BIND=close
   for places in cores threads; do
     echo "=== OpenMP 1x24, OMP_PLACES=$places"

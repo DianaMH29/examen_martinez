@@ -13,7 +13,7 @@
 #  1) Topologia real del nodo.
 #  2) Si "1 CPU" de Slurm es un nucleo fisico o un hilo de hyperthreading.
 #  3) Si --cpu-bind=cores + OMP_PLACES/OMP_PROC_BIND dejan cada hilo en su nucleo y socket.
-# Uso:  sbatch slurm/00_verificar_afinidad.slurm
+# Uso:  sbatch slurm/checks/00_verificar_afinidad.slurm
 
 ulimit -s unlimited
 module load vasp/6.3.0-gnu9-openmp
@@ -36,7 +36,7 @@ echo; echo "=== 3b) Hilos OpenMP dentro de cada proceso"
 export OMP_NUM_THREADS=6 OMP_PLACES=cores OMP_PROC_BIND=close
 module load gnu8/8.3.0 2>/dev/null; command -v gfortran || echo "(sin gfortran: revise module avail gnu)"
 
-if gfortran -fopenmp -O0 "$SLURM_SUBMIT_DIR/slurm/omp_check.f90" -o "/tmp/omp_check_$SLURM_JOB_ID" 2>/dev/null; then
+if gfortran -fopenmp -O0 "$SLURM_SUBMIT_DIR/slurm/checks/omp_check.f90" -o "/tmp/omp_check_$SLURM_JOB_ID" 2>/dev/null; then
   srun --cpu-bind=cores --cpus-per-task=6 "/tmp/omp_check_$SLURM_JOB_ID" | sort -t= -k3,3n -k4,4n
   rm -f "/tmp/omp_check_$SLURM_JOB_ID"
 else
