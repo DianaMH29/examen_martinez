@@ -6,7 +6,7 @@
 #SBATCH --time=00:05:00
 #SBATCH --mem=2000M
 #SBATCH --output=logs/%x_%j.out
-#SBATCH -w granado-compute-16
+#SBATCH -w granado-compute-17
 #SBATCH --reservation=halzate_10
 #
 # Segundo chequeo: Aqui se ve, dentro de esa asignacion,
@@ -15,8 +15,7 @@
 # Uso: sbatch slurm/01_verificar_ht.slurm
 
 module load vasp/6.3.0-gnu9-openmp
-module load gnu9 2>/dev/null
-
+module load gnu8/8.3.0 2>/dev/null
 mask () { srun "$@" --cpu-bind=cores bash -c 'echo "  rank=$SLURM_PROCID cpus=$(taskset -cp $$ | cut -d: -f2)"' | sort -t= -k2,2n; }
 
 echo "=== Asignacion completa del job"; mask -n1 -c24
